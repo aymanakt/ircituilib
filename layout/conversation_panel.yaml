@@ -1,0 +1,61 @@
+# The conversation window, as a raised panel.
+#
+# This template exists so the widget has a declarative home: a layout names
+# `conversation_window` and the widget supplies every message semantic --
+# asymmetric anchoring, cluster tails, reply headers, trailing-corner shapes,
+# edge-fused reaction badges, delivery marks, the timestamps margin and the
+# typing row.
+#
+# NOTHING ABOUT AN INDIVIDUAL MESSAGE IS WRITTEN HERE, and that is C25 rather
+# than an omission. A message's direction, cluster position, status and reactions
+# are LIVE values: they arrive from the application as messages are appended, and
+# a file cannot hold a live value. What this template chooses is only how much
+# width a bubble may take and after how many lines a long one is truncated.
+#
+# THE GEOMETRY IS SET TO THE MEASURED FLOAT CAP, not to a preferred size.
+# dev/probes/conversation's `frame` case inflates a float and measures it: the
+# widest that comes back is 34 columns by 18 rows, because a floating window is
+# sized against the box it is being placed in. A 46-wide template would be clipped
+# to 34 and the clip would be silent, so the number written here is the number that
+# survives. See IRCITUILIB_PROGRESS_INDICATORS_DESIGN.md on the same cap -- it is
+# pre-existing and not this widget's to fix.
+id: conversation_panel
+type: linear
+orientation: vertical
+layout_width: 34
+layout_height: 17
+border: true
+draggable: true
+theme_class: panel
+children:
+  - id: conv_title
+    type: text_view
+    text: conversation
+    layout_width: match_parent
+    layout_height: 1
+    theme_class: text_muted
+
+  # The widget. It has no children: its rows are not nodes, and it paints one per
+  # message at that message's own height.
+  #
+  # bubble_avatar_gutter_cols is deliberately ABSENT here. This panel is 34 columns,
+  # under the 36 a widget with avatars needs at its own minimum, and the float cap
+  # above would clip a wider template silently. The demo shows the feature instead.
+  - id: conv_window
+    type: conversation_window
+    layout_width: match_parent
+    # match_parent, NOT the 13 the first version of this template carried. A fixed
+    # height meant the widget stayed 13 rows tall however large the panel was, so
+    # the typing row and the last bubble's bottom rule landed on the same row and
+    # the full-screen demo still showed thirteen rows of conversation.
+    layout_height: match_parent
+    bubble_max_width_percent: 65
+    bubble_collapse_lines: 6
+    theme_class: surface
+
+  - id: conv_status
+    type: text_view
+    text: golden input
+    layout_width: match_parent
+    layout_height: 1
+    theme_class: text_muted

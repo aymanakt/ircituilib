@@ -1,0 +1,29 @@
+# Orphan row template — referenced by item_template: log_row.yaml on the
+# recycler in ircitui.yaml.
+#
+# The id must equal the file stem. The generator rewrites
+# `item_template: log_row.yaml` to the stem `log_row`, and at runtime the
+# recycler resolves that with sLookupRef, which searches each template's subtree
+# for a node of that id. A root ided anything else would be loaded into
+# templates[] and then never found — the rows would silently fail to build.
+# file_menu.yaml is the same shape for the same reason.
+id: log_row
+type: linear
+orientation: horizontal
+layout_width: match_parent
+layout_height: 1
+children:
+  # The dataset position, so a recycled row can be seen to be showing a
+  # different entry after a scroll rather than the same one repainted.
+  - id: row_index
+    type: text_view
+    text: "0000"
+    layout_width: 6
+    layout_height: 1
+    text_colour: yellow
+  - id: row_text_line
+    type: text_view
+    text: ""
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: white

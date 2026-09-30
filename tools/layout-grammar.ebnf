@@ -1,0 +1,505 @@
+(*
+  IRCIT UI layout grammar (semantic, after YAML parse).
+  YAML syntax itself is RFC 9110 / YAML 1.2 — this grammar
+  constrains the mapping that remains.
+
+  Two documents:
+    AppFile      = "app" mapping as the single document root
+    TemplateFile = Widget as the document root (id + type required)
+*)
+
+AppFile      = { "app", Widget } ;
+TemplateFile = Widget ;
+
+Widget       = Required, { Attribute }, { "children", ChildList } ;
+
+Required     = "id", Ident,
+               "type", TypeName ;
+
+ChildList    = { Widget } ;
+(* children only if TypeName in Containers *)
+
+TypeName     = WidgetType | ContainerType ;
+
+WidgetType   = "text_view" | "button" | "image_view" | "edit_text"
+             | "check_box" | "radio_button" | "switch"
+             | "progress_bar" | "seek_bar" | "emoji_table"
+             | "conversation_window" ;
+
+ContainerType
+             = "linear" | "frame" | "constraint"
+             | "radio_group" | "check_group" | "recycler" ;
+
+Attribute    = SizeAttr | BoxAttr | FlagAttr | LookAttr
+             | PackAttr | ConstraintAttr | GroupAttr
+             | ImageAttr | EventAttr | TemplateAttr
+             | TextAttr | CollapseAttr | ItemTemplateAttr
+             | ViewTypesAttr | StickyHeadersAttr
+             | RowHeightAttr | MaxHeightAttr | ClassAttr | BarAttr
+             | ConversationAttr
+             | ExtraAttr ;
+
+StickyHeadersAttr
+             = "sticky_headers", integer  (* the type_id, NOT a boolean. The
+                                             rows of that type are section
+                                             dividers, and the one covering the
+                                             top of the viewport is ALSO pinned
+                                             to it. It names an entry that
+                                             view_types must already declare --
+                                             see C22 -- so the layout stays the
+                                             only place the vocabulary lives, and
+                                             no new API has to tell the engine
+                                             which type is a header. *) ;
+
+SizeAttr     = ( "layout_width" | "layout_height" ), SizeVal ;
+SizeVal      = "match_parent" | "wrap_content" | Cells | Percent ;
+Cells        = integer  (* > 0 *) ;
+GutterCells  = integer  (* 6-12, floors. 6 is five columns of avatar and one of
+                           clearance, and it is the floor because the timestamps
+                           occupy the same columns: a narrower gutter would have a
+                           stamp row and an avatar claiming the same cells. *) ;
+Percent      = integer, "%"  (* 1-100; share of the space the parent offers
+                                along this axis, resolved at layout time. Has
+                                no meaning where the parent's own extent is
+                                itself unresolved — inside a wrap_content
+                                ancestor it falls back to content size. *) ;
+
+MaxHeightAttr
+             = "max_height", Cells  (* an absolute ceiling in rows, and the only
+                                       thing that makes a wrap_content height
+                                       determinate for a recycler — see C16.
+                                       Distinct from layout_height rather than a
+                                       SizeVal, because it is a bound on the
+                                       resolved extent and not another way of
+                                       asking for one. *) ;
+
+BoxAttr      = ( "margin" | "padding" ), BoxVal ;
+BoxVal       = Cells | "[", Cells, ",", Cells, ",", Cells, ",", Cells, "]" ;
+
+FlagAttr     = "border", Bool
+             | "clickable", Bool
+             | "enabled", Bool
+             | "draggable", Bool
+             | "dragable", Bool          (* alias of draggable *)
+             | "scrollable", Bool
+             | "children_selectable", Bool
+             | "visibility", VisVal ;
+VisVal       = "visible" | "invisible" | "gone" | Bool ;
+
+LookAttr     = ( "text_colour" | "bg_colour" | "border_colour" | "mark_colour" ), Colour ;
+Colour       = "black" | "red" | "green" | "yellow"
+             | "blue" | "magenta" | "cyan" | "white" ;
+
+ClassAttr    = "theme_class", SlotName ;
+SlotName     = "surface" | "panel" | "text" | "text_muted" | "text_error"
+             | "edit_active" | "overlay_snackbar" | "overlay_action"
+             | "accent" ;
+
+PackAttr     = "orientation", ( "vertical" | "horizontal" )
+             | "gravity", Gravity
+             | "layout_gravity", Gravity ;
+Gravity      = "start" | "end" | "top" | "bottom" | "center" | "fill" ;
+
+ConstraintAttr
+             = ConstraintKey, ( "parent" | Ident ) ;
+ConstraintKey
+             = "constraintTop_toTopOf" | "constraintTop_toBottomOf"
+             | "constraintBottom_toTopOf" | "constraintBottom_toBottomOf"
+             | "constraintStart_toStartOf" | "constraintStart_toEndOf"
+             | "constraintEnd_toStartOf" | "constraintEnd_toEndOf" ;
+
+GroupAttr    = "values", "[", { String } , "]"
+             | "selected", ( String | Cells | "[", { String | Cells } , "]" )
+             | "default_selection", ( Cells | "[", { Cells } , "]" ) ;
+
+ImageAttr    = "path", String
+             | "render_mode", ( "half-blocks" | "half-block" | "braille" )
+             | "columns", Cells ;
+
+EventAttr    = EventKey, Ident ;   (* C function name *)
+(* The eight field names of IrcitUiInteractionState.lifecycle_listeners, which is
+   the block the generator emits a named handler into, plus on_text_changed, which
+   is the edit field's post-mutation sync and lands in the sibling
+   .post_interceptor_listeners block. The lists are tools/gen_ui.py's
+   USER_LISTENERS and POST_INTERCEPTOR_LISTENERS, and validate_layout.py imports
+   them from there rather than restating them, so this rule and those tuples cannot
+   disagree -- they did, and --validate-layout refused seven of the eight while the
+   generator accepted all of them.
+
+   on_text_changed is refused on any kind but edit_text by the validator, because
+   the fast lane is the only reader and a binding on anything else would never
+   fire. The block's other member, on_scrolled, is deliberately not a key: nothing
+   in the tree produces it. *)
+EventKey     = "on_key_down" | "on_click" | "on_scroll" | "on_draw"
+             | "on_resize" | "on_focus_changed"
+             | "on_inflate" | "on_deflate"
+             | "on_text_changed" ;
+
+TemplateAttr = "layout_template", String ;  (* file or template id *)
+
+ItemTemplateAttr
+             = "item_template", String  (* file or template id, resolved by the
+                                           same loader as TemplateAttr and for the
+                                           same reason: the rows of a recycler come
+                                           from one orphan template cloned per
+                                           visible row. A key of its own rather
+                                           than a reuse of layout_template, because
+                                           the two say different things — one is
+                                           "inflate me", the other "clone me for
+                                           every row" — and a recycler may declare
+                                           both. Only on recycler; see C16. *) ;
+
+ViewTypesAttr
+             = "view_types", "[", { ViewType } , "]" ;
+ViewType     = "type_id", integer, "template", String ;
+(* the HETEROGENEOUS case of the same question ItemTemplateAttr answers. One
+   entry per row shape the list can show: type_id is the tag the application's
+   IrcitUiRecyclerAdapter::get_item_view_type returns for a position, and
+   template is the orphan template that tag is cloned from, resolved by the same
+   loader as ItemTemplateAttr.
+
+   The split is the point rather than a convenience: the templates are layout and
+   come from this file, the type of each position is data and comes from the
+   application, and the engine joins them without reading either. A registry with
+   no discriminator installed renders the first entry's template everywhere,
+   which is a diagnosable default rather than an empty list.
+
+   Mutually exclusive with item_template — see C21. *)
+
+RowHeightAttr
+             = "row_height", Cells  (* how many rows each pooled row of a
+                                       recycler occupies. Omitted means 1, which
+                                       is the common case: a list of one-line
+                                       entries. It is not the node's own height —
+                                       that is layout_height — but the height of
+                                       one item inside it, and the layout pass
+                                       divides the viewport by it to decide how
+                                       many rows to keep pooled. A zero would be
+                                       a division by zero, so it is refused here
+                                       rather than floored; the engine floors a
+                                       zero that arrives through the C API. Only
+                                       on recycler; see C16. *) ;
+
+TextAttr     = "text", String ;
+
+CollapseAttr = "collapsible", Bool
+             | "collapsed", Bool
+             | ( "collapsible_indicator_open"
+               | "collapsible_indicator_close"
+               | "collapsible_fill" ), Glyph ;
+Glyph        = Char ;   (* one glyph, and exactly one. Counted in code points,
+                           not bytes and not display columns: a base letter plus
+                           a combining mark is two and is refused, a
+                           double-width emoji is one and is let through. An
+                           explicitly empty value is an error — omitting the key
+                           is how a template asks for the default below.
+                           The default pair follows the collapse direction, and
+                           for a vertical fold also the side the container sits
+                           on, because the glyph points the way the edge travels:
+                             horizontal (folds up/down)     U+25BD / U+25B3
+                             vertical, right of its parent  U+25B7 open / U+25C1 folded
+                             vertical, left of its parent   U+25C1 open / U+25B7 folded
+                           and the fill defaults to U+2591 either way. *)
+Char         = ? exactly one Unicode code point ? ;
+
+BarAttr      = ( "fill_glyph" | "empty_glyph" ), Glyph
+             | "label_mode", ( "off" | "adjacent" | "centered" ) ;
+(* The progress bar's vocabulary. Reuses Glyph above, and so reuses its whole
+   rule: one code point, counted in code points rather than bytes or columns,
+   with an explicitly empty value refused. The two glyphs are what the bar fills
+   its track with -- the played part and the remainder -- and both default, so a
+   bar that names neither is the `█`/`░` pair the design document starts from.
+
+   label_mode is an enumerated key rather than a boolean or a flag word, because
+   it is not an on/off: `adjacent` RESERVES columns and makes the bar narrower,
+   `centered` draws over the bar and does not, and `off` is neither. That
+   difference reaches the layout, not just the paint -- see C24. There is no
+   `time` value: the media player's clock label is a fourth mode in the design
+   document and nothing implements it yet, and a key that resolves to nothing is
+   a trap rather than a reservation. It is added when it is drawn. *)
+
+ConversationAttr
+             = "bubble_max_width_percent", Percent
+             | "bubble_collapse_lines", Cells
+             | "bubble_avatar_gutter_cols", GutterCells ;
+(* The conversation window's configuration, and the whole of it.
+
+   THERE ARE NO PER-MESSAGE KEYS HERE, and that is the rule rather than an
+   omission. A bubble's direction, its cluster position, its status and its
+   reactions are LIVE values: they arrive from the application as messages are
+   appended, and a layout file cannot hold a live value. The same reasoning
+   already settled the progress bar's buffered position -- a settable second
+   value is not a key -- and it settles this: the widget's semantics are the
+   widget's, and what a layout chooses is only how much width a bubble may take
+   and after how many lines a long one is collapsed. See C25.
+
+   bubble_max_width_percent is the share of the widget's width a bubble may
+   occupy, and it is what makes a long message reflow instead of running the full
+   width of the glass. The design document hard-codes 65 and floors the result at
+   25 columns; the floor is kept, the 65 is a key because it is the one number
+   that decides how a conversation reads.
+
+   bubble_collapse_lines is the truncation ceiling: a body longer than this is
+   drawn with an ellipsis and can be expanded in place. It is a line count and
+   not a boolean because "collapsed" without a ceiling is a widget that decides
+   for itself how much of a message to hide.
+
+   bubble_avatar_gutter_cols is the columns reserved at the viewport's left edge
+   for an inbound block's avatar. It is a key and not a constant because a narrow
+   widget cannot afford the width, and its ABSENCE means no avatars rather than a
+   default width: a layout that never asked for them must not grow a gutter, and
+   there would otherwise be no way to ask for none. *)
+
+ExtraAttr    = (* forbidden — any other key is an error *) ;
+Ident        = letter, { letter | digit | "_" } ;
+Bool         = "true" | "false" ;
+String       = ? YAML scalar ? ;
+
+(* ---- context conditions (not context-free) ----
+   C1  children            only on ContainerType
+   C2  orientation         only on linear | radio_group | check_group
+   C3  constraint*         only on a child of constraint
+   C4  values / selected   only on radio_group | check_group
+   C5  path / render_mode  only on image_view
+   C6  columns             only on emoji_table | image_view
+   C7  layout_template     only on button (or clickable widget)
+   C8  id unique among siblings of one parent; unique in file recommended
+   C9  constraint* target  is "parent" or a sibling id
+   C10 AppFile root        type constraint | frame | linear
+   C11 wrap_content + no children on a container → warning
+   C12 CollapseAttr        only on ContainerType — a container is the only kind
+                           with an extent of its own to fold, and the only one
+                           whose children can be hidden behind it
+   C13 "collapsed"         implies "collapsible"; a starting state the node has
+                           no way to leave would be a dead key
+   C14 Percent             rejected outside 1-100 rather than clamped, in both
+                           the validator and the generator. Zero is refused: a
+                           node given no share of its parent is a mistake, and
+                           the one-cell floor it would reach is a poor way to
+                           spell it. The C API carries no validator, so a 0 can
+                           still arrive through IrcitUiWidgetDef and the engine
+                           floors it in sPlace
+   C15 Glyph               exactly one Unicode code point. An explicitly empty
+                           value is an error, since omitting the key is how a
+                           template asks for the direction default. Enforced in
+                           both the validator and the generator — the generator
+                           is the path every build takes, so it does not rely on
+                           the validator having been run
+   C16 recycler            layout_height may not be wrap_content unless
+                           max_height is also given. A recycler's extent is not
+                           derived from its children — the children are allocated
+                           to fit the extent — so wrap_content alone is circular
+                           and there is nothing to compute the row allocation
+                           from. max_height breaks the circle by supplying the
+                           extent outright. item_template is likewise only on
+                           recycler: it is the node's whole reason for existing,
+                           and a container without one has no rows to clone —
+                           so it is required there, not merely permitted.
+                           row_height is scoped to recycler for the same reason,
+                           and is optional because 1 row is the answer for a
+                           list of one-line entries — the key exists for the
+                           case that is not.
+                           max_height is scoped to recycler too, and for the
+                           reason C7 scopes layout_template to button: the
+                           recycler is the only kind that reads it today, and a
+                           key that resolves to nothing is a trap rather than a
+                           reservation. It widens when a second kind reads it.
+                           Enforced in both the validator and the generator, for
+                           the reason given in C15
+   C17 children_selectable only on ContainerType, and never together with
+                           "scrollable". The engine's flag of that name makes a
+                           container's children a keyboard-navigable list, with
+                           sel0 as the cursor child and Up/Down moving it, so
+                           there has to be a container to hold the cursor. It
+                           was in the generator and in layout/file_menu.yaml for
+                           some time before it was written here, which is what
+                           made --validate-layout unusable for the whole app:
+                           the generator accepted a key the validator, correct
+                           against this grammar, refused. scrollable is excluded
+                           for the reason the flag's own comment gives -- the
+                           child offset it applies breaks the mapping from child
+                           index to row that the cursor depends on. Enforced in
+                           both the validator and the generator
+   C18, C19                RESERVED, and deliberately not used here. Both are
+                           specified by SS21 of IRCITUILIB_DESIGN_REFACTOR_V1.md
+                           -- dataset_key validation and loop-recursion detection
+                           for layout_template_loop -- and that section is
+                           `future`, so the rules exist in prose and not in this
+                           list. The numbering jumps from C17 to C20 for that
+                           reason: the numbers are claimed, and taking one would
+                           collide the day SS21 is built.
+   C20 mark_colour         only on a toggle -- check_box, radio_button, switch,
+                           check_group or radio_group. It colours the MARK: the
+                           tick, the circle, the switch's knob. It does not colour
+                           the caption, which text_colour already sets, so a
+                           widget can carry a green tick on a white label.
+                           On a GROUP it colours every row's mark, and that is the
+                           only place it can live: a group's children are
+                           generated from `values` and have no def of their own to
+                           carry a key, so a per-row colour is not expressible.
+                           Omitted means the mark takes text_colour, which is what
+                           it did before this key existed -- a template that does
+                           not mention it is unchanged.
+   C21 view_types          only on recycler, and mutually exclusive with
+                           item_template. The two answer the same question -- what
+                           shape is one row -- and a declaration that asked both
+                           would leave the answer to whichever the engine happened
+                           to read first, which is not a decision a layout should
+                           be making by accident. item_template is the homogeneous
+                           case and view_types the heterogeneous one, so C16's
+                           requirement that a recycler name a row template is
+                           satisfied by either, and a recycler naming neither is
+                           refused by C16 as it always was.
+                           type_id is a non-negative integer and must be unique
+                           within the list. The engine only ever compares a tag,
+                           never interprets it, so any value it can round-trip is
+                           legal; uniqueness is required because two entries
+                           sharing one would be resolved by position, and which
+                           of them won would be an implementation detail that a
+                           layout then silently depends on.
+                           The list may not be empty. An empty registry IS the
+                           homogeneous case, and item_template already spells that
+                           plainly -- so an empty list is a more confusing way of
+                           writing something the grammar already has a word for.
+                           Enforced in both the validator and the generator, for
+                           the reason given in C15
+   C22 sticky_headers      only on a recycler, only together with view_types, and
+                           its value must be a type_id that view_types declares.
+                           All three halves are the same rule seen from
+                           different sides: the value NAMES a row type, so
+                           without a registry there is no id space for it to name
+                           at all, and an id the registry does not hold would pin
+                           a slot no row can be built for -- the header would be
+                           blank on every pass with nothing said about why.
+                           It is the type_id rather than a boolean because the
+                           type ids are the layout's own vocabulary: view_types
+                           declares them a few lines above, so the layout already
+                           knows which one is a divider, and requiring the
+                           application to say so again through a second channel
+                           would be a second copy of a fact that can disagree.
+                           A dataset with no row of that type pins nothing -- the
+                           header is simply not shown, which is the correct
+                           answer for a list whose sections have not started yet,
+                           not an error.
+                           Enforced in both the validator and the generator, for
+                           the reason given in C15
+   C23 theme_class         its value must be one of the nine palette slots, and a
+                           node that declares one draws in that slot's colours,
+                           resolved at paint time from the name the layout spelled --
+                           so redefining the slot restyles every node wearing it with
+                           no per-node write and no tree walk. It does NOT repaint
+                           them for free: a slot resolves to a colour PAIR, and a
+                           changed pair reaches the screen when the cells are written
+                           again, so whoever redefines a slot must mark what wears it
+                           for repaint.
+
+                           Why the value is constrained rather than free text: the
+                           field has always been a free-form string, compared by
+                           IRCITUI_THEME_CLASS rules with strcmp, and a free-form
+                           value is exactly what makes a semantic name useless --
+                           'text_muted' in one layout and 'muted_text' in the next
+                           are two spellings of one intent and no rule can match
+                           both. The slot vocabulary is fixed for that reason, and
+                           it is ONE vocabulary with ircit_ui_palette_slot_enum.h;
+                           post_generation_verifier.py's R18 asserts the C enum and
+                           this grammar agree rather than trusting them to.
+
+                           A slot names colours for a node's own surface, so it is
+                           refused together with text_colour or bg_colour: the slot is
+                           resolved at paint time, after the node's own colours were
+                           set, so one of the two would be silently ignored -- and a
+                           key that resolves to nothing is a trap rather than a
+                           reservation. border_colour stays allowed, because the nine
+                           roles are about a surface, a text line, an overlay or a
+                           value's leading edge, and a border is none of them;
+                           border_colour remains the way to colour a frame.
+
+                           Enforced in both the validator and the generator, for
+                           the reason given in C15
+
+   C24 bar attributes     fill_glyph, empty_glyph and label_mode are only on
+                           progress_bar and seek_bar, and a bar's label_mode must
+                           be one of the three the enum declares.
+
+                           Why the kind restriction: a glyph the engine will not
+                           read is worse than no key at all, because it looks like
+                           it did something. The two bar kinds are the only ones
+                           whose painter reads these; on a button, fill_glyph
+                           would parse, validate, generate and be ignored at paint
+                           time, with nothing anywhere saying so -- which is the
+                           failure mode C12's kind restriction and C20's exist to
+                           prevent.
+
+                           Why label_mode is an enumerated key and not a flag:
+                           `adjacent` changes the BAR'S WIDTH. It reserves the
+                           label's columns, so the bar the painter draws into and
+                           the bar a hit test seeks in are both narrower than the
+                           node's content box -- and if those two widths are
+                           computed in different places they will disagree by a
+                           column, which is a seek that lands on the wrong cell.
+
+                           The reservation is therefore resolved by ONE function
+                           that both readers call (sBarTrackW in src/ui_engine.c),
+                           and NOT by IrcitUiLayout. That is a correction to what
+                           this rule first said: the node's own box does not move
+                           when the mode changes -- what moves is how much of it
+                           the track may use, and that is a property of the
+                           painter's metric rather than of the layout. Putting it
+                           in the layout would mean the layout had to measure a
+                           string it has no value for yet.
+
+                           The validator refuses an unknown mode by name, and the
+                           generator refuses it too rather than falling through to
+                           `off` -- a typo'd mode that silently renders no label
+                           is the same trap in a smaller place.
+
+                           Enforced in both the validator and the generator, for
+                           the reason given in C15
+
+   C25 conversation_window takes two configuration keys, and neither it nor its
+                           keys appear anywhere else.
+
+                           Why it is NOT a ContainerType: its ROWS are not nodes.
+                           A conversation's message count is unbounded and its
+                           rows have their own heights, so a container would have
+                           to build one child per message -- which is the pool the
+                           recycler exists to avoid, with a uniform row height
+                           this widget cannot use. The validator refuses a
+                           `children:` key on it rather than generating one that is
+                           quietly ignored.
+
+                           THE ENGINE AND THIS GRAMMAR DISAGREE ABOUT IT, and the
+                           divergence is deliberate. IrcitUiIsContainer answers
+                           TRUE for this kind, because the widget owns exactly one
+                           child -- the message viewport, which it synthesizes
+                           itself and which is in neither WidgetType nor
+                           ContainerType. What answering true buys is the engine's
+                           own frame (a bordered LEAF is never framed) and its own
+                           scrollbar, wheel and thumb-drag. So the two lists are
+                           otherwise kept in step and here they must not be: a
+                           layout declaring `children:` on this kind is still the
+                           error this rule says it is, and the child it does have
+                           is the widget's business rather than the file's.
+
+                           Why wrap_content is refused: the widget's width drives
+                           its own reflow, so a measured width would be derived
+                           from a measurement of itself. The engine's fallback for
+                           a kind with no wrap branch answers ONE column, which is
+                           a wrong answer rather than a conservative one. Refused
+                           rather than answered with a floor invented in a second
+                           place.
+
+                           Why its keys are refused elsewhere: a glyph or a width
+                           the engine will not read is worse than no key at all,
+                           because it looks like it did something -- C12's and
+                           C20's kind restriction, and C24's, for the same reason.
+
+                           Why there are no per-message keys: see the production's
+                           own comment. A layout cannot hold a live value, and a
+                           key that resolves to nothing is a trap rather than a
+                           reservation.
+
+                           Enforced in BOTH the validator and the generator. The
+                           generator gained the same rules with the fields it
+                           emits, and this note said otherwise until they landed.
+*)

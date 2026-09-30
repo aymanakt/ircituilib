@@ -1,0 +1,8 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "include": [
+    "cmake-modules/presets/ircitui-sanitizers.json",
+    "cmake-modules/presets/ircitui-fake-curses.json"
+  ]
+}

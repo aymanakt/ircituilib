@@ -1,0 +1,15 @@
+{
+  "version": 6,
+  "include": [ "ircitui-sanitizers.json" ],
+  "configurePresets": [
+    {
+      "name": "fake",
+      "displayName": "Dev + fake curses (builds and links with no terminal)",
+      "inherits": "dev",
+      "cacheVariables": { "IRCITUI_USE_FAKE_CURSES": "ON" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "fake", "configurePreset": "fake" }
+  ]
+}

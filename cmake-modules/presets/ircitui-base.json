@@ -1,0 +1,43 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "ircitui-base",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "IRCITUI_BUILD_WITH_COVERAGE": "OFF"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug (no sanitizers — special investigation)",
+      "inherits": "ircitui-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "IRCITUI_BUILD_WITH_ASAN": "OFF",
+        "IRCITUI_BUILD_WITH_UBSAN": "OFF",
+        "IRCITUI_BUILD_WITH_LSAN": "OFF"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release (no sanitizers — special investigation)",
+      "inherits": "ircitui-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "IRCITUI_BUILD_WITH_ASAN": "OFF",
+        "IRCITUI_BUILD_WITH_UBSAN": "OFF",
+        "IRCITUI_BUILD_WITH_LSAN": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug",   "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" }
+  ]
+}

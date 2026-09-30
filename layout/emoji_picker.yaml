@@ -1,0 +1,22 @@
+id: emoji_picker
+type: linear
+orientation: vertical
+border: true
+border_colour: yellow
+draggable: true
+on_inflate: IrcitUiPopupFocusOnOpen
+children:
+  - id: emoji_title
+    type: text_view
+    text: "emoji"
+    layout_width: match_parent
+  - id: emoji_grid
+    type: emoji_table
+    columns: 8
+    text: "😀😁😂🤣😃😄😅😆😉😊😋😎😍😘🥰😜🤔🙄😏😢😭😡👍👎❤️🔥⭐🎉"
+    clickable: true
+  - id: emoji_close
+    type: button
+    text: Close
+    layout_width: match_parent
+    clickable: true

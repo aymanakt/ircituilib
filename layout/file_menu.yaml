@@ -1,0 +1,24 @@
+# Composable popup — referenced by layout_template: file_menu.yaml
+id: file_menu
+type: linear
+orientation: vertical
+border: true
+border_colour: yellow
+children_selectable: true
+on_inflate: IrcitUiPopupFocusOnOpen
+children:
+  - id: mi_help
+    type: button
+    text: Help
+    layout_width: match_parent
+    clickable: true
+  - id: mi_open
+    type: button
+    text: Open
+    layout_width: match_parent
+    clickable: true
+  - id: mi_close
+    type: button
+    text: Close
+    layout_width: match_parent
+    clickable: true

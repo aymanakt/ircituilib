@@ -1,0 +1,20 @@
+#!/bin/bash
+# usage: cmp_set.sh <driver> <seq>...
+cd /tmp/parity
+drv="$1"; shift
+pass=0; fail=0; failed=""
+for s in "$@"; do
+  python3 "$drv" /tmp/parity/base/ui_demo "$s" > /tmp/parity/s_base.txt 2>/tmp/parity/s_base.err; rcb=$?
+  python3 "$drv" /tmp/parity/v3/ui_demo   "$s" > /tmp/parity/s_v3.txt   2>/tmp/parity/s_v3.err; rcv=$?
+  if [ $rcb -ne 0 ] || [ $rcv -ne 0 ]; then
+    fail=$((fail+1)); printf "  ERROR   %-16s rc base=%s v3=%s\n" "$s" "$rcb" "$rcv"
+    sed -n '1,3p' /tmp/parity/s_base.err | sed 's/^/          base: /'
+    sed -n '1,3p' /tmp/parity/s_v3.err   | sed 's/^/          v3  : /'
+  elif cmp -s /tmp/parity/s_base.txt /tmp/parity/s_v3.txt; then
+    pass=$((pass+1)); printf "  SAME    %s\n" "$s"
+  else
+    fail=$((fail+1)); printf "  DIFFER  %s\n" "$s"
+    diff /tmp/parity/s_base.txt /tmp/parity/s_v3.txt | head -12 | sed 's/^/          /'
+  fi
+done
+echo "  ==> $pass same, $fail differ"

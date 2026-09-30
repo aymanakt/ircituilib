@@ -1,0 +1,82 @@
+# The predictive gallery's word-list source, read at startup by
+# IrcitUiDictionaryIngestFile. One word per line; blank lines and `#` lines are skipped, and
+# a line longer than the caller's cap is refused rather than truncated.
+#
+# NOT A SYSTEM DICTIONARY, and deliberately so: /usr/share/dict/words does not exist on every
+# machine this repository is built on (it does not exist on the one this file was written on),
+# so a demo that named it would be a demo that works only where the file happens to be. The
+# list is short, checked in, and about the demo's own vocabulary -- which also means several of
+# its words share a prefix with entries in the compiled-in list, so the composite's ORDER is
+# observable rather than asserted.
+accumulator
+acknowledgement
+architectural
+asynchronous
+authorisation
+buffer
+callback
+canopy
+chronological
+collapsible
+compilation
+constraint
+coroutine
+declarative
+dehydrated
+detachment
+dispatcher
+documentation
+encapsulation
+enumerated
+ephemeral
+fragmentation
+framework
+gallery
+generator
+horizontal
+immutable
+implementation
+incremental
+indentation
+indicator
+instrumented
+interpolated
+invariant
+justification
+killswitch
+lifecycle
+linearise
+localisation
+manifests
+measurement
+message
+multiplexer
+notification
+orthogonal
+palette
+parameter
+persistence
+placeholder
+polymorphic
+precedence
+prediction
+predictive
+prefetching
+provisional
+reciprocal
+reconciled
+reentrant
+repository
+resolution
+saturation
+serialisation
+snapshot
+stabilise
+subscriber
+synchronous
+termination
+throughput
+transitive
+uncommitted
+verification
+vocabulary

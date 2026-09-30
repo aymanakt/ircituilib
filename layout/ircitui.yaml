@@ -1,0 +1,319 @@
+# Vocabulary
+#   type: text_view|button|image_view|edit_text|check_box|radio_button|
+#         switch|progress_bar|seek_bar|linear|frame|constraint
+#   layout_width / layout_height: match_parent | wrap_content | <cells>
+#   constraint* : parent | <sibling id>
+#   orientation: vertical | horizontal   (linear only)
+#   layout_gravity / gravity: start|end|top|bottom|center|fill
+#   margin / padding: <n> or [T, R, B, L]
+
+app:
+  id: main
+  type: constraint
+  layout_width: match_parent
+  layout_height: match_parent
+  border: true
+  border_colour: cyan
+  children:
+    - id: header
+      type: linear
+      orientation: horizontal
+      layout_width: match_parent
+      border: true
+      border_colour: blue
+      constraintTop_toTopOf: parent
+      constraintStart_toStartOf: parent
+      constraintEnd_toEndOf: parent
+      bg_colour: blue
+      padding: 0
+      children:
+        - id: title
+          type: text_view
+          text: "IRCIT 📟"
+          bg_colour: blue
+        - id: spacer
+          type: text_view
+          text: " "
+          layout_width: match_parent
+        - id: menu_file
+          type: button
+          text: File
+          clickable: true
+          layout_template: file_menu.yaml
+          text_colour: black
+          bg_colour: cyan
+        - id: menu_emoji
+          type: button
+          text: "😀"
+          clickable: true
+          layout_template: emoji_picker.yaml
+          text_colour: black
+          bg_colour: yellow
+        - id: menu_tools
+          type: button
+          text: Tools
+          clickable: true
+          layout_template: tools_panel.yaml
+          text_colour: black
+          bg_colour: green
+        # The conversation window's declarative home. It is a header button for
+        # the reason every other float is: the generator reaches a template only
+        # through a reference from the root layout, so a template nothing names is
+        # SILENTLY absent from the build. The existing demo shows this button and
+        # does nothing with it -- binding a key to it is the conversation demo's
+        # job, and src/examples/ui_main.c is deliberately untouched.
+        - id: menu_conversation
+          type: button
+          text: Chat
+          clickable: true
+          layout_template: conversation_panel.yaml
+
+        - id: menu_progress
+          type: button
+          text: Bars
+          clickable: true
+          layout_template: progress_panel.yaml
+          text_colour: black
+          bg_colour: magenta
+        - id: menu_predict
+          type: button
+          text: Predict
+          clickable: true
+          layout_template: predictive_panel.yaml
+          text_colour: black
+          bg_colour: cyan
+        - id: quit_btn
+          type: button
+          text: quit
+          clickable: true
+          text_colour: black
+          bg_colour: yellow
+
+    # Standalone rail on the far left: a sibling of body, not part of it, so it
+    # runs the full height between the header and the toolbar rather than being
+    # confined to body's frame. Its centre falls left of the parent's, so its
+    # indicator takes the top-RIGHT corner - the mirror of the right rail's,
+    # from the same rule rather than a second one.
+    - id: side_panel_left
+      type: linear
+      orientation: vertical
+      layout_width: 25%
+      layout_height: match_parent
+      collapsible: true
+      border: true
+      border_colour: cyan
+      theme_class: panel
+      constraintTop_toBottomOf: header
+      constraintBottom_toTopOf: toolbar
+      constraintStart_toStartOf: parent
+      children:
+        - id: panel_left_title
+          type: text_view
+          text: left panel
+          layout_width: match_parent
+          theme_class: text
+        # C23. A note is the muted role by definition, so the layout states the
+        # role instead of naming a colour -- and drops text_colour, which the slot
+        # would have overridden.
+        - id: panel_left_note
+          type: text_view
+          text: click the indicator
+          layout_width: match_parent
+          theme_class: text_muted
+
+    - id: body
+      type: frame
+      # C23. The backdrop role: with the canopy effect enabled this container's
+      # background becomes a vertical ramp, and the text on it is blended to match.
+      theme_class: surface
+      layout_width: match_parent
+      layout_height: match_parent
+      border: true
+      scrollable: true
+      constraintTop_toBottomOf: header
+      constraintBottom_toTopOf: toolbar
+      # Starts where the left rail ends rather than at the parent's own edge, so
+      # the rail sits outside this frame. The rail is anchored to the parent
+      # alone: pinning its end to body's start as well would be a cycle - body's
+      # start is that end - and the solver would fall back to the seed. THE KEY
+      # MOVES WITH THE RAIL: read as `toEndOf: parent` -- correct while no rail
+      # exists -- it means "start at the parent's END edge", and the conversation
+      # window came out 1x13 at x=80 and painted nothing.
+      constraintStart_toEndOf: side_panel_left
+      constraintEnd_toEndOf: parent
+      # bg_colour was black here. The surface slot supplies it now, and with the canopy
+      # effect enabled that slot's backdrop is a ramp down the screen, so the flat black
+      # is exactly what C23 refuses to let this node keep.
+      children:
+        # The main region is split so the collapsible case has somewhere to live.
+        # A frame places all its children at the same origin, so the split needs a
+        # linear to stack them side by side. FOUR EQUAL PANES, and that is written
+        # as one share each rather than as a size: percentages are taken against
+        # the split's own width (sMeasW, avail * percent / 100), so 25% four times
+        # is a quarter of what the split offers, not of the screen. NO CHILD IS ON
+        # match_parent -- in a horizontal linear that mode means "the remainder",
+        # every match_parent child is handed the WHOLE of it and then advanced
+        # past, so two of them put the second beyond the split's right edge
+        # (measured once as 1x13 at x=80, which painted nothing) and one of them
+        # would stop the others being equal.
+        - id: main_split
+          type: linear
+          orientation: horizontal
+          layout_width: match_parent
+          layout_height: match_parent
+          children:
+            # F1/F6's subject: IrcitUiDemoFill resolves this id, fills it with rows
+            # and turns on scrolling.
+            - id: canvas
+              type: text_view
+              text: canvas
+              layout_width: match_parent
+              layout_height: match_parent
+              gravity: center
+              text_colour: cyan
+
+            # A virtualised log list, beside the canvas. The pool it allocates
+            # is what the viewport holds, not what the dataset holds, so the
+            # demo can bind ten thousand entries to twenty-odd nodes.
+            #
+            # HETEROGENEOUS: two row shapes in one list, chosen per position by
+            # the application's get_item_view_type. A type the registry does not
+            # name leaves its slot blank rather than being given the other
+            # shape -- see C21, and sSlotTemplate in the engine.
+            - id: log_list
+              type: recycler
+              layout_width: 25%
+              layout_height: match_parent
+              row_height: 1
+              view_types:
+                - type_id: 0
+                  template: log_row.yaml
+                - type_id: 1
+                  template: log_row_warn.yaml
+                # A section divider. Its rows are drawn in the flow of the list
+                # like any other, AND the one covering the top of the viewport is
+                # cloned a second time into the pinned header -- which is what
+                # sticky_headers names, by type id.
+                - type_id: 10
+                  template: log_row_section.yaml
+                # The EDITING shape of a row. It is an ordinary registry entry and
+                # nothing here marks it as the edit template: which position takes
+                # it is a run-time fact, arriving through
+                # IrcitUiRecyclerSetEditType and IrcitUiRecyclerBeginEdit, for the
+                # same reason a declaration cannot say why the user is typing.
+                - type_id: 20
+                  template: log_row_edit.yaml
+              # The type whose rows are dividers and are also pinned (C22). Naming
+              # the id rather than a boolean keeps the vocabulary in one place:
+              # this file declares the ids, so this file is what knows which of
+              # them is a header.
+              sticky_headers: 10
+              border: true
+              border_colour: green
+
+            # The id is chat_window, NOT conv_window. The generator's id index is
+            # global across the app tree and every template it reaches, and
+            # conversation_panel.yaml already declares a conv_window -- two nodes
+            # with one id is a SystemExit at generation time, which is the
+            # generator refusing rather than picking one.
+            - id: chat_window
+              type: conversation_window
+              layout_width: 25%
+              layout_height: match_parent
+              bubble_max_width_percent: 65
+              bubble_collapse_lines: 6
+              theme_class: surface
+
+            # THE COLLAPSIBLE SET, of which this is the right-hand member: the
+            # rails fold on their WIDTH, the toolbar below folds on its HEIGHT, so
+            # one container covers each case. A vertical linear folds on its CROSS
+            # axis, so this rail gives up its width and comes back as a one-column
+            # strip. THE COLUMNS IT FREES GO NOWHERE: with no pane on match_parent
+            # there is no remainder for them to fall into, so folding leaves the
+            # gap at the split's right end -- the price of four equal panes, and
+            # the reason to put one child back on match_parent if that reads worse
+            # than the fold does. Both halves of the gesture act on it: F4 through
+            # IrcitUiSetCollapsed, the indicator's click through the engine's hit
+            # test.
+            - id: side_panel
+              type: linear
+              orientation: vertical
+              layout_width: 25%
+              layout_height: match_parent
+              collapsible: true
+              # A border gives the indicator a corner glyph to replace, so the
+              # open container reserves no row of its own -- see sContentBox.
+              border: true
+              border_colour: magenta
+              theme_class: panel
+              children:
+                - id: panel_title
+                  type: text_view
+                  text: side panel
+                  layout_width: match_parent
+                  theme_class: text
+                # A note is the muted role by definition, so the layout states the
+                # role instead of naming a colour, which the slot would override.
+                - id: panel_note
+                  type: text_view
+                  text: click the indicator, or F4
+                  layout_width: match_parent
+                  theme_class: text_muted
+
+    # Horizontal, so it folds on the cross axis and its collapsed state is one
+    # row. It spans the parent, so its centre and the parent's coincide: the
+    # corner rule has no side to choose between and the glyph takes the left.
+    - id: toolbar
+      type: linear
+      orientation: horizontal
+      layout_width: match_parent
+      layout_height: wrap_content
+      collapsible: true
+      border: true
+      border_colour: yellow
+      theme_class: panel
+      # Anchored to the footer, not to body. Pinning its top to body's bottom as
+      # well would be a cycle - body's bottom is that top - and the solver would
+      # settle on the seed value, collapsing body to one row. Its height is
+      # wrap_content, so its top follows from its bottom and body then fills
+      # whatever is left between the header and it.
+      constraintBottom_toTopOf: footer
+      constraintStart_toStartOf: parent
+      constraintEnd_toEndOf: parent
+      children:
+        - id: toolbar_label
+          type: text_view
+          text: toolbar
+          layout_width: wrap_content
+          text_colour: yellow
+        - id: toolbar_spacer
+          type: text_view
+          text: " "
+          layout_width: match_parent
+        - id: toolbar_note
+          type: text_view
+          text: click the indicator
+          layout_width: wrap_content
+          theme_class: text_muted
+
+    - id: footer
+      type: linear
+      orientation: vertical
+      layout_width: match_parent
+      border: true
+      border_colour: magenta
+      constraintBottom_toBottomOf: parent
+      constraintStart_toStartOf: parent
+      constraintEnd_toEndOf: parent
+      children:
+        - id: status
+          type: text_view
+          text: ready
+          layout_width: match_parent
+          text_colour: cyan
+        - id: cmdline
+          type: edit_text
+          text: ""
+          layout_width: match_parent
+          clickable: true
+

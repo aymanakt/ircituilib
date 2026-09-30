@@ -1,0 +1,41 @@
+id: tools_panel
+type: linear
+orientation: vertical
+layout_width: 34
+scrollable: true
+border: true
+border_colour: green
+draggable: true
+on_inflate: IrcitUiPopupFocusOnOpen
+children:
+  - id: tools_title
+    type: text_view
+    text: tools (drag me)
+    layout_width: match_parent
+  - id: tools_img
+    type: image_view
+    path: sample.png
+    render_mode: half-blocks
+    layout_width: match_parent
+    layout_height: 6
+  - id: plan
+    type: radio_group
+    values: ["1", "2", "3"]
+    default_selection: 0
+    orientation: vertical
+    layout_width: match_parent
+    layout_height: 4
+    mark_colour: green
+  - id: extras
+    type: check_group
+    values: ["a", "b", "c"]
+    selected: ["a", "c"]
+    orientation: vertical
+    layout_width: match_parent
+    layout_height: 4
+    mark_colour: green
+  - id: tools_close
+    type: button
+    text: Close
+    layout_width: match_parent
+    clickable: true

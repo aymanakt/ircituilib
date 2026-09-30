@@ -1,0 +1,101 @@
+# The predictive field's gallery.  A template, like progress_panel.yaml: reached from the
+# header button that names it in layout/ircitui.yaml, gathered by tools/gen_ui.py and
+# compiled into the model at build time.  Ctrl-A raises it; see the predictive section of
+# ui_main.c.
+#
+# THE DICTIONARY IS NOT HERE, and cannot be: it is a pointer to a runtime object, so it is
+# attached from C with IrcitUiEditTextSetDictionary.  This file is the field and the
+# readouts; the sources are wired in ui_main.c.
+id: predictive_panel
+type: linear
+orientation: vertical
+layout_width: 52
+border: true
+border_colour: green
+draggable: true
+on_inflate: IrcitUiPopupFocusOnOpen
+children:
+  - id: pred_title
+    type: text_view
+    text: predictive field (Ctrl-A, Tab accepts)
+    layout_width: match_parent
+
+  # THE FIELD COMES FIRST AND IS CLICKABLE, so IrcitUiPopupFocusOnOpen's search for the
+  # first focusable child lands on it and the panel opens ready to type into.
+  - id: predict_input
+    type: edit_text
+    text: ""
+    layout_width: match_parent
+    clickable: true
+
+  - id: pred_hint_label
+    type: text_view
+    text: hint
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: cyan
+
+  # THE READOUTS ARE ONE ROW EACH, PINNED, AND THAT IS NOT COSMETIC: a wrap_content row grows
+# when its string grows, which pushes every row below it DOWN -- including the buttons. Measured:
+# clicking Report worked with short readouts and missed entirely once the learned line got longer,
+# because the button had moved out from under the pointer between the raise and the click.
+#
+# THE TWO READOUTS ARE THE DEMONSTRATION.  pred_api prints what the PUBLIC API answers --
+  # IrcitUiEditTextHint and the dictionary accessor -- and pred_internal prints what the
+  # FRAMEWORK's own state says, reached through a private header the way the bar gallery's
+  # readout is.  The point is that they are on the glass side by side rather than asserted to
+  # agree: an "api" line that said a hint was up while the field drew none would be the
+  # separation made visible.
+  - id: pred_api
+    type: text_view
+    text: api -
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: green
+
+  - id: pred_internal
+    type: text_view
+    text: internal -
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: green
+
+  - id: pred_sources
+    type: text_view
+    text: sources -
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: yellow
+
+  - id: pred_learned
+    type: text_view
+    text: learned -
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: magenta
+
+  # [Learn] puts the field's token into the learned source, a trie of its own. Click it twice
+  # with the same word and that word starts winning its prefix: the weight is the tie-break.
+  # Ctrl-R does the same thing from the keyboard, and is the shortcut worth knowing.
+  - id: pred_learn
+    type: button
+    text: Learn
+    layout_width: match_parent
+    clickable: true
+
+  # [Report] recomputes the readouts. THE READOUTS CANNOT REFRESH THEMSELVES: a printable
+  # character typed into a focused field is taken by the loop's edit fast path
+  # (main_looper.c) and never reaches an application listener, so the demo is not told about
+  # the keystroke that changed the hint. A click does reach it -- which is why this is a
+  # button -- and Ctrl-R does the same thing.
+  - id: pred_report
+    type: button
+    text: Report
+    layout_width: match_parent
+    clickable: true
+
+  - id: predict_close
+    type: button
+    text: Close
+    layout_width: match_parent
+    clickable: true

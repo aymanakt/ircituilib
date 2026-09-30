@@ -1,0 +1,19 @@
+# Pin the mirror control files to LF regardless of core.autocrlf.
+# CRLF here silently defeats the exclusion parsing and leaks private files
+# into the public GitHub mirror (see devops/post_squash_hook.sh).
+devops/git_mirror_exclusions.txt                text eol=lf
+devops/git_mirror_content_filters.txt           text eol=lf
+devops/git_last_mirror_commit_ids_registry.txt  text eol=lf
+
+# Every shell script in the tree, not just the mirror ones above.
+#
+# core.autocrlf is true by default on Windows and is set globally on this
+# machine, so without this a fresh clone checks these out with CRLF. That is
+# not cosmetic: a CRLF shebang reads as '#!/usr/bin/env bash\r', which is not
+# an interpreter, and the failure is reported as exit 127 with no clue as to
+# why. src/version.c.sh is the first thing the build runs, so a CRLF checkout
+# fails before a single source file is compiled.
+#
+# Covers version.c.sh, dev_build.sh, tests/run_generator_test.sh and every
+# fixture under tests/fixtures/.
+*.sh                                            text eol=lf

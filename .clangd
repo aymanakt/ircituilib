@@ -1,0 +1,12 @@
+# Point clangd at the CMake-generated compile database so it applies the same
+# per-file flags as the build: the same -I set, the same -std=c17, and the same
+# -Wall -Wextra -Wpedantic -Werror the library target compiles under. Without it
+# clangd falls back to heuristics, cannot resolve ircituilib/... or the private
+# src/include/... headers, and reports errors the build does not have.
+#
+# build/dev is the library build (IRCITUI_BUILD_EXAMPLE=ON, _PACKAGE_TESTS=OFF).
+# Its database is the only one in build/ covering every translation unit in this
+# tree -- the library sources, src/livedata/, and src/examples/. build/ is
+# gitignored, so this names a path the build produces rather than one it ships.
+CompileFlags:
+  CompilationDatabase: build/dev

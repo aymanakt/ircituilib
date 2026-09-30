@@ -1,0 +1,44 @@
+# Orphan row template — the section divider of the recycler in ircitui.yaml,
+# declared there as view_types entry type_id 10 and named by sticky_headers.
+#
+# The id must equal the file stem, for the same reason log_row.yaml's must.
+#
+# THE SAME TEMPLATE SERVES TWO ROLES, and that is the design rather than a
+# saving. A row of this type is a divider in the flow of the list, and the one
+# covering the top of the viewport is ALSO cloned into the pinned header. Both
+# are clones of this file, so a divider and its pinned copy cannot look
+# different — which is what a reader expects, and what a second template would
+# put at risk the first time one of the two was edited.
+#
+# The ids are distinct from the other two templates' because the generator's id
+# index is global across the app tree and every template it reaches.
+id: log_row_section
+type: linear
+orientation: horizontal
+layout_width: match_parent
+layout_height: 1
+children:
+  # A rule, so a section reads as a band across the list rather than as another
+  # entry.
+  #
+  # ASCII, AND THAT IS A WORKAROUND RATHER THAN A CHOICE. This was a run of U+2500
+  # BOX DRAWINGS LIGHT HORIZONTAL and it rendered as garbage, because
+  # sPaintSelText -- the painter every text_view goes through -- is BYTE oriented:
+  # it reads `unsigned char ch = str_ptr[idx]` and calls mvwaddch once per BYTE,
+  # advancing its column by one per byte. A three-byte glyph therefore occupies
+  # three cells, and a window narrower than the glyph receives a truncated UTF-8
+  # sequence. Two cells of a U+2500 run is the two bytes E2 94, which is not a
+  # character at all. The same trap the toggle glyphs hit, in a painter that has
+  # not had the treatment they got; the fix is a real gate and is not this one.
+  - id: section_rule
+    type: text_view
+    text: "--"
+    layout_width: 2
+    layout_height: 1
+    text_colour: cyan
+  - id: section_title
+    type: text_view
+    text: ""
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: cyan

@@ -1,0 +1,200 @@
+# The progress-bar gallery: every configuration axis this revision implements, one node each.
+#
+# Raised on Ctrl-L by the demo (ui_main.c, sToggleBarsPanel).  Like tools_panel.yaml this is an
+# orphan template -- it has an id and is inflated on demand, so it is not part of the screen
+# tree and not part of --verify-layout's node count.
+#
+# THE NODES ARE CHOSEN AS COVERAGE, not as decoration.  Each one exists to exercise a
+# different path through the painter or the layout, so that a reviewer looking at the panel is
+# looking at every branch at once:
+#
+#   bar_plain      the default pair (U+2588 / U+2591), no frame, no padding -- the control
+#   bar_glyphs     fill_glyph / empty_glyph from the template (C24), which is the whole point
+#                  of the grammar work: a glyph the LAYOUT chooses, not the library
+#   bar_bordered   IRCITUI_F_BORDER, so the painter's inner box is two cells narrower -- the
+#                  path dev/probes/progress/p_bar_attrs.c's `box` case measures
+#   bar_padded     padding: 1, the axis the probe CANNOT cover, because IrcitUiWidgetDef has
+#                  no padding member and a C-built node therefore cannot have one
+#   bar_accent     theme_class: accent -- the ninth palette role, which did not exist before
+#                  this revision and which no other node in this tree can wear yet
+#   bar_wide       a second plain bar at a different width, so the split's rounding can be
+#                  compared side by side rather than inferred (22 and 30 columns round
+#                  differently at the same percentage)
+#   bar_para       the two axes COMBINED: template glyphs (U+25B0 / U+25B1, the
+#                  parallelogram pair) with an adjacent label, which no other node pairs --
+#                  bar_glyphs has the glyphs with the label off, bar_adjacent the label with
+#                  the default glyphs
+#
+# The VALUES are not here, and could not be: a position is live data, and this file is
+# compiled into the model at build time.  IrcitUiBarSetValue is what moves them, and on Ctrl-L
+# the demo drives every bar from one asynchronous task -- see the gallery section of ui_main.c.
+id: progress_panel
+type: linear
+orientation: vertical
+layout_width: 40
+border: true
+border_colour: green
+draggable: true
+on_inflate: IrcitUiPopupFocusOnOpen
+children:
+  - id: prog_title
+    type: text_view
+    text: progress (async, Ctrl-L)
+    layout_width: match_parent
+
+  - id: prog_plain_label
+    type: text_view
+    text: plain
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_plain
+    type: progress_bar
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_glyphs_label
+    type: text_view
+    text: glyphs from the template
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_glyphs
+    type: progress_bar
+    fill_glyph: "▓"
+    empty_glyph: "·"
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_bordered_label
+    type: text_view
+    text: bordered
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_bordered
+    type: progress_bar
+    border: true
+    border_colour: magenta
+    layout_width: match_parent
+    layout_height: 3
+
+  - id: prog_padded_label
+    type: text_view
+    text: padded (1)
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_padded
+    type: progress_bar
+    padding: 1
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_accent_label
+    type: text_view
+    text: theme_class accent
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_accent
+    type: progress_bar
+    theme_class: accent
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_adjacent_label
+    type: text_view
+    text: label_mode adjacent
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_adjacent
+    type: progress_bar
+    label_mode: adjacent
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_center_label
+    type: text_view
+    text: label_mode centered
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_center
+    type: progress_bar
+    label_mode: centered
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_grad_label
+    type: text_view
+    text: gradient (set from C)
+    layout_width: match_parent
+    text_colour: cyan
+  # NO gradient KEY ON THIS NODE, AND THAT IS THE POINT. There is no `gradient:` in the
+  # grammar: a gradient's two endpoint colours are live colour data rather than layout, and
+  # adding a key for them would mean two places could set one thing. The demo calls
+  # IrcitUiBarSetGradient on this node when it raises the panel -- so this line is the
+  # C-API half of the split the readout below shows on the glass, and bar_glyphs above is
+  # the YAML half.
+  - id: bar_grad
+    type: progress_bar
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_wide_label
+    type: text_view
+    text: a second width
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_wide
+    type: progress_bar
+    layout_width: 30
+    layout_height: 1
+
+  # The parallelogram style, which is the one combination the nodes above do NOT already
+  # cover: bar_glyphs has template glyphs with the label OFF, bar_adjacent has an adjacent
+  # label with the DEFAULT glyphs. Drawn as U+25B0 / U+25B1 with the percentage beside the
+  # track --  ▰▰▰▰▱▱▱▱▱▱▱▱  20%  -- which is the one axis pair a reviewer comparing those two
+  # rows would otherwise have to hold in their head.
+  #
+  # THE TRACK IS 32 COLUMNS AND NOT THE 40 THE STYLE IS USUALLY DRAWN AT, and that is the
+  # panel's own arithmetic rather than a limit of the painter: this float is layout_width 40
+  # with a frame, so a match_parent child has 38 columns, and sBarTrackW reserves
+  # PRIV_CONFIG_DEFAULT_BAR_LABEL_W (6 -- " %3d%% ") when the label is adjacent. Widen the
+  # float to 48 and the track becomes 40.
+  - id: prog_para_label
+    type: text_view
+    text: parallelogram, label beside
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_para
+    type: progress_bar
+    fill_glyph: "▰"
+    empty_glyph: "▱"
+    label_mode: adjacent
+    layout_width: match_parent
+    layout_height: 1
+
+  # THE BUFFERED TRACK, which is the gallery's one node whose appearance cannot be read off
+  # this file at all -- TWO numbers make it, and neither is here.  The painter draws the fill
+  # from `value` to wherever the buffer has reached, so the same template renders as a plain
+  # bar when nothing is buffered and as a three-run track when something is.
+  #
+  # THAT IS WHY IT NEEDS NO NEW KEY, and why it is a node rather than a C24 attribute: a
+  # buffered position is live data -- the test the API guide states is "could this be written
+  # in a file?", and a number a worker posts four times a second cannot.  The glyph and the
+  # colours are the template's, as for every other bar; only the two positions come from the
+  # API, through IrcitUiBarSetValue and IrcitUiBarSetBuffered.
+  #
+  # AT REST IT IS INDISTINGUISHABLE FROM bar_plain, and that is the property that lets the
+  # field be added without changing a single existing layout: nothing buffered draws nothing.
+  - id: prog_buffered_label
+    type: text_view
+    text: buffered track, set from the API
+    layout_width: match_parent
+    text_colour: cyan
+  - id: bar_buffered
+    type: progress_bar
+    layout_width: match_parent
+    layout_height: 1
+
+  - id: prog_close
+    type: button
+    text: Close
+    layout_width: match_parent
+    clickable: true

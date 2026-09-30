@@ -1,0 +1,20 @@
+# Orphan row template — the EDITING shape of a recycler row, declared as
+# view_types entry type_id 20 in ircitui.yaml and named to the engine by
+# IrcitUiRecyclerSetEditType.
+#
+# The id must equal the file stem, for the same reason log_row.yaml's must.
+#
+# A BARE edit_text RATHER THAN A CONTAINER, and that is forced by the row's
+# height rather than chosen. A row's box is not this file's business: sPlace
+# gives every pooled row `row_height` cells and the layout pass does not measure
+# a row's contents, so a template cannot grow to fit a box and a bordered one
+# would have no room for its border. An edit_text draws its own "> " prefix and
+# its value on the single line it is handed, which is exactly the cell it gets —
+# and it means the editable thing IS the row node, so the focus lands on the row
+# itself and there is no inner node for the engine to have to name.
+id: log_row_edit
+type: edit_text
+text: ""
+layout_width: match_parent
+layout_height: 1
+text_colour: white

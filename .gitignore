@@ -1,0 +1,21 @@
+cmake-build-debug/
+build/
+.cmake/
+.idea/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.o
+src/fpl-14.11/libfpl.a
+include/config.h
+Testing/
+/packages/ircituilib/ui_demo
+/packages/ircituilib/ircituilib.log
+
+# Written to CWD by IrcitUiVerifyLayout (src/ui_verify.c), so it lands wherever
+# the verifier is run -- including the repo root.
+layout-preview.ppm
+/ircituilib.log
+/interactive_msg_demo.log
+/streaming_msg_client_demo.log

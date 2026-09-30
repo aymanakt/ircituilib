@@ -1,0 +1,185 @@
+{
+"test_suite": "IrcitUiConversationWindow Reference Matrix",
+"target_composite_id": "active_conversation_panel",
+"generated_timestamp_epoch_ms": 1790000000000,
+"color_palette_mapping": {
+"1": "cyan_bold_outbound",
+"2": "magenta_inbound_alpha",
+"3": "green_inbound_beta",
+"4": "yellow_system_alert"
+},
+"conversation_flow": [
+{
+"message_id": 1001,
+"sender_name": "System",
+"sender_color_tag": 4,
+"text_content": "Encryption Key Verified. Channel secured via Affero GPL v3 standard.",
+"timestamp": "08:30",
+"direction": "system",
+"cluster_position": "lone",
+"status": "read",
+"has_reply_context": false,
+"reactions": [],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 1,
+"force_border_override": "none"
+}
+},
+{
+"message_id": 1002,
+"sender_name": "Alice",
+"sender_color_tag": 2,
+"text_content": "Hey team, did we manage to trace that heap-use-after-free defect in the sFreeWidgetState loop?",
+"timestamp": "08:31",
+"direction": "inbound",
+"cluster_position": "top",
+"status": "read",
+"has_reply_context": false,
+"reactions": [],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 4,
+"force_border_override": "organic_pill_top"
+}
+},
+{
+"message_id": 1003,
+"sender_name": "Alice",
+"sender_color_tag": 2,
+"text_content": "I measured it on the test harness client, and it seems like the recycler rows are occasionally retaining the previous position's memory maps during scrolling boundaries.",
+"timestamp": "08:31",
+"direction": "inbound",
+"cluster_position": "middle",
+"status": "read",
+"has_reply_context": false,
+"reactions": [
+{ "emoji": "👍", "count": 2 },
+{ "emoji": "👀", "count": 1 }
+],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 5,
+"force_border_override": "tailless_square_middle"
+}
+},
+{
+"message_id": 1004,
+"sender_name": "Alice",
+"sender_color_tag": 2,
+"text_content": "Never mind, I think the G10 fix path solves it. Let me know if you can replicate it.",
+"timestamp": "08:32",
+"direction": "inbound",
+"cluster_position": "bottom",
+"status": "read",
+"has_reply_context": false,
+"reactions": [],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 3,
+"force_border_override": "organic_pill_bottom_tail"
+}
+},
+{
+"message_id": 1005,
+"sender_name": "Bob",
+"sender_color_tag": 1,
+"text_content": "Acknowledged.",
+"timestamp": "08:33",
+"direction": "outbound",
+"cluster_position": "lone",
+"status": "read",
+"has_reply_context": false,
+"reactions": [],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 3,
+"force_border_override": "short_pill_asymmetric_right"
+}
+},
+{
+"message_id": 1006,
+"sender_name": "Bob",
+"sender_color_tag": 1,
+"text_content": "Yes, I tracked it down to the frame's dirty list. The pointers were staying on the stack across deflate ticks.",
+"timestamp": "08:34",
+"direction": "outbound",
+"cluster_position": "top",
+"status": "delivered",
+"has_reply_context": true,
+"reply_context": {
+"reply_msg_id": 1003,
+"reply_sender": "Alice",
+"reply_snippet": "I measured it on the test harness..."
+},
+"reactions": [
+{ "emoji": "🔥", "count": 4 }
+],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 6,
+"force_border_override": "threaded_reply_top"
+}
+},
+{
+"message_id": 1007,
+"sender_name": "Bob",
+"sender_color_tag": 1,
+"text_content": "I am pushing the structural synchronization fix to master now.",
+"timestamp": "08:34",
+"direction": "outbound",
+"cluster_position": "bottom",
+"status": "sending",
+"has_reply_context": false,
+"reactions": [],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 3,
+"force_border_override": "outbound_tail_bottom"
+}
+},
+{
+"message_id": 1008,
+"sender_name": "Charlie",
+"sender_color_tag": 3,
+"text_content": "This is a framework verification macro-message used to test maximum volume layout rendering parameters inside the virtual cell matrix. It is designed to overflow the 65 percent width barrier, force a string chunk reflow iteration, trigger character truncation limits if configured, and test overall vertical grid budgeting.",
+"timestamp": "08:35",
+"direction": "inbound",
+"cluster_position": "lone",
+"status": "read",
+"has_reply_context": false,
+"reactions": [],
+"interactivity": {
+"is_collapsed": true,
+"framework_allocated_height_cells": 4,
+"force_border_override": "collapsible_large_bubble_truncated"
+}
+},
+{
+"message_id": 1009,
+"sender_name": "Alice",
+"sender_color_tag": 2,
+"text_content": "This block represents an expired temporary message to verify opacity changes.",
+"timestamp": "08:36",
+"direction": "inbound",
+"cluster_position": "lone",
+"status": "expired",
+"has_reply_context": false,
+"reactions": [],
+"interactivity": {
+"is_collapsed": false,
+"framework_allocated_height_cells": 3,
+"force_border_override": "low_opacity_decay_dim"
+}
+}
+],
+"transient_presence_state": {
+"is_friend_typing": true,
+"typing_sender_name": "Charlie",
+"typing_indicator_payload": {
+"visual_glyph": "...",
+"animation_style": "bouncing_strobing_dots",
+"height_cells": 3
+}
+}
+}

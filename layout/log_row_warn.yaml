@@ -1,0 +1,49 @@
+# Orphan row template — referenced by the view-type registry on the recycler in
+# ircitui.yaml, as the second shape a row of that list may take.
+#
+# The id must equal the file stem, for the same reason log_row.yaml's must: the
+# generator rewrites `template: log_row_warn.yaml` to the stem `log_row_warn`, and
+# at runtime the recycler resolves that with sLookupRef, which searches each
+# template's subtree for a node of that id.
+#
+# THE IDS ARE DISTINCT FROM log_row.yaml'S, AND THEY HAVE TO BE. The generator's
+# id index holds one node per id across the app tree AND every template it
+# reaches, so reusing `row_index` here is refused as a duplicate rather than
+# resolved. That is not an obstacle to work around: the two rows are different
+# node trees, so a binder has to address them by different names anyway, and the
+# refusal is what stops a template being written that silently depends on which
+# of the two it was handed.
+#
+# WHY IT IS A DIFFERENT SHAPE AND NOT JUST A DIFFERENT COLOUR. This is the
+# template that proves the list is heterogeneous: it carries a marker column the
+# info row has no node for, so a row built from it is a different tree and not
+# the same tree painted red. A slot cannot be rebound between the two — it is
+# freed and re-cloned — and that is the whole cost of the capability, so the demo
+# has to be able to show it happening.
+id: log_row_warn
+type: linear
+orientation: horizontal
+layout_width: match_parent
+layout_height: 1
+children:
+  - id: warn_index
+    type: text_view
+    text: "0000"
+    layout_width: 6
+    layout_height: 1
+    text_colour: yellow
+  # The column the info row has no node for. Three cells wide, so the text of the
+  # two shapes does not line up and a reader can see at a glance which rows were
+  # cloned from which template.
+  - id: warn_mark
+    type: text_view
+    text: " ! "
+    layout_width: 3
+    layout_height: 1
+    text_colour: red
+  - id: warn_text
+    type: text_view
+    text: ""
+    layout_width: match_parent
+    layout_height: 1
+    text_colour: red
